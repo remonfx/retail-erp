@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "RetailCore",
+    "slug": "retailcore-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": { "bundleIdentifier": "app.retailcore.mobile", "infoPlist": { "NSCameraUsageDescription": "Scan product barcodes", "NSLocationWhenInUseUsageDescription": "Attendance check-in at your branch" } },
+    "android": { "package": "app.retailcore.mobile", "permissions": ["CAMERA", "ACCESS_FINE_LOCATION"] },
+    "plugins": [["expo-camera", { "cameraPermission": "Scan product barcodes" }], "expo-secure-store", "expo-location"],
+    "extra": { "apiUrl": "http://10.0.2.2:4000" }
+  }
+}

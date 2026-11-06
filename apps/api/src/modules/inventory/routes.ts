@@ -247,6 +247,11 @@ export default async function inventoryRoutes(app: FastifyInstance) {
     reply.code(201);
     return { id, number, lines: r.rowCount };
   });
+  route(app, 'GET', '/api/v1/stock-counts', { perm: 'inventory.stock.read', query: z.object({ state: z.string().optional() }) }, async ({ tx, actor, companyId, query }) => {
+    const bf = branchFilter(actor, 'inventory.stock.read', companyId);
+    return (await tx.query(`SELECT c.*, l.code AS location_code, (SELECT count(*) FROM inv_stock_count_line x WHERE x.count_id = c.id)::int AS lines, (SELECT count(*) FROM inv_stock_count_line x WHERE x.count_id = c.id AND x.counted_qty IS NOT NULL)::int AS counted
+      FROM inv_stock_count c JOIN inv_location l ON l.id = c.location_id WHERE c.company_id = $1 AND ($2::uuid[] IS NULL OR c.branch_id = ANY($2)) AND ($3::text IS NULL OR c.state = $3) ORDER BY c.created_at DESC LIMIT 200`, [companyId, bf, query.state ?? null])).rows;
+  });
   route(app, 'GET', '/api/v1/stock-counts/:id', { perm: 'inventory.stock.read' }, async ({ tx, actor, companyId, params }) => {
     const c = (await tx.query('SELECT * FROM inv_stock_count WHERE id = $1 AND company_id = $2', [params.id, companyId])).rows[0];
     if (!c) throw notFound('COUNT');
