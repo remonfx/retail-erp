@@ -1,0 +1,50 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: rc_test }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+    env:
+      TEST_DATABASE_OWNER_URL: postgres://postgres:postgres@localhost:5432/rc_test
+      TEST_DATABASE_URL: postgres://rc_app:rc_app_dev_password@localhost:5432/rc_test
+      DATABASE_OWNER_URL: postgres://postgres:postgres@localhost:5432/rc_test
+      DATABASE_URL: postgres://rc_app:rc_app_dev_password@localhost:5432/rc_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rc/domain build
+      - name: Typecheck
+        run: |
+          pnpm --filter @rc/domain typecheck
+          pnpm --filter @rc/api typecheck
+          pnpm --filter @rc/web typecheck
+          pnpm --filter @rc/pos-desktop typecheck
+          pnpm --filter @rc/mobile typecheck
+      - name: Domain unit tests (property-based)
+        run: pnpm --filter @rc/domain test
+      - name: API integration tests (real PostgreSQL, RLS, invariants)
+        run: pnpm --filter @rc/api test
+      - name: POS engine end-to-end (engine ↔ API ↔ PostgreSQL)
+        run: pnpm --filter @rc/pos-desktop test
+      - name: Web build
+        run: pnpm --filter @rc/web build
+      - name: POS UI build
+        run: pnpm --filter @rc/pos-desktop exec vite build
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test -p pos-store

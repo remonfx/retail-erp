@@ -82,25 +82,37 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const cur = decodeCursor(query.cursor);
     const showCost = !!companyId && can(actor, 'catalog.cost.view', { companyId });
     const q = query.q?.trim();
-    // Exact barcode/SKU hit first (B-tree), else trigram/substring search on normalized names (GIN)
+    // Phase 1 — candidate ids using only index-friendly predicates:
+    //   exact SKU / barcode (B-tree) + every normalized word as a trigram LIKE (GIN bitmap AND).
+    let candidates: string[] | null = null;
+    if (q) {
+      const words = normalizeArabic(q).split(' ').filter((w) => w.length >= 2).slice(0, 5);
+      // SECURITY DEFINER functions (migration 0011) keep trigram/prefix indexes usable under RLS
+      const byCode = (await tx.query('SELECT variant_id FROM catalog_code_ids($1, 200)', [q])).rows.map((r) => r.variant_id as string);
+      const byName = words.length ? (await tx.query('SELECT variant_id FROM catalog_search_ids($1::text[], 1000)', [words])).rows.map((r) => r.variant_id as string) : [];
+      const exact: string[] = [], bySku = byCode;
+      candidates = [...new Set([...exact, ...byName, ...bySku])];
+      if (!candidates.length) return { data: [], hasMore: false, nextCursor: null };
+    }
+    // Phase 2 — one page of details (correlated lookups only for <= limit rows)
     const rows = (await tx.query(`
-      WITH exact AS (
-        SELECT v.id FROM cat_variant v WHERE $1::text IS NOT NULL AND upper(v.sku) = upper($1)
-        UNION SELECT b.variant_id FROM cat_barcode b WHERE $1::text IS NOT NULL AND b.code = $1 AND b.status <> 'retired')
+      WITH base AS (
+        SELECT v.id FROM cat_variant v JOIN cat_product p ON p.id = v.product_id
+         WHERE ($1::uuid[] IS NULL OR v.id = ANY($1))
+           AND ($2::uuid IS NULL OR p.category_id IN (SELECT id FROM cat_category WHERE $2 = ANY(path)))
+           AND ($3::uuid IS NULL OR p.brand_id = $3) AND ($4::text IS NULL OR p.status = $4)
+           AND ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM cat_branch_assortment a WHERE a.branch_id = $5 AND a.variant_id = v.id))
+           AND ($6::uuid IS NULL OR v.id > $6) AND v.merged_into_id IS NULL
+         ORDER BY v.id LIMIT $7)
       SELECT v.id, v.sku, v.status AS variant_status, v.name_suffix_ar, v.name_suffix_en, p.id AS product_id, p.name_ar, p.name_en, p.status, p.tracking, p.is_weighted,
              c.name_ar AS category_name_ar, br.name_ar AS brand_name_ar,
              (SELECT b.code FROM cat_barcode b WHERE b.variant_id = v.id AND b.is_primary AND b.status = 'active' LIMIT 1) AS barcode,
              (SELECT i.price FROM prc_price_list_item i JOIN prc_price_list pl ON pl.id = i.price_list_id WHERE i.variant_id = v.id AND pl.company_id = $8 AND pl.scope = 'company'
                 AND i.valid_from <= now() AND (i.valid_to IS NULL OR i.valid_to > now()) ORDER BY pl.priority, i.min_qty LIMIT 1) AS retail_price,
              CASE WHEN $9 THEN (SELECT CASE WHEN pc.qty > 0 THEN round(pc.value / pc.qty, 4) ELSE pc.last_avg END FROM inv_product_cost pc WHERE pc.company_id = $8 AND pc.variant_id = v.id) END AS avg_cost
-        FROM cat_variant v JOIN cat_product p ON p.id = v.product_id JOIN cat_category c ON c.id = p.category_id LEFT JOIN cat_brand br ON br.id = p.brand_id
-       WHERE ($1::text IS NULL OR v.id IN (SELECT id FROM exact) OR p.search_norm LIKE '%' || rc_norm_ar($1) || '%' OR v.sku ILIKE $1 || '%')
-         AND ($2::uuid IS NULL OR p.category_id IN (SELECT id FROM cat_category WHERE $2 = ANY(path)))
-         AND ($3::uuid IS NULL OR p.brand_id = $3) AND ($4::text IS NULL OR p.status = $4)
-         AND ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM cat_branch_assortment a WHERE a.branch_id = $5 AND a.variant_id = v.id))
-         AND ($6::uuid IS NULL OR v.id > $6) AND v.merged_into_id IS NULL
-       ORDER BY v.id LIMIT $7`,
-      [q || null, query.categoryId ?? null, query.brandId ?? null, query.status ?? null, query.branchId ?? null, cur?.[1] ?? null, query.limit + 1, companyId || null, showCost])).rows;
+        FROM base JOIN cat_variant v ON v.id = base.id JOIN cat_product p ON p.id = v.product_id JOIN cat_category c ON c.id = p.category_id LEFT JOIN cat_brand br ON br.id = p.brand_id
+       ORDER BY v.id`,
+      [candidates, query.categoryId ?? null, query.brandId ?? null, query.status ?? null, query.branchId ?? null, cur?.[1] ?? null, query.limit + 1, companyId || null, showCost])).rows;
     return page(rows, query.limit, 'id');
   });
 

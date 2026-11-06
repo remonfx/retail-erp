@@ -1,0 +1,49 @@
+# Local / single-customer deployment. For SaaS production use the same images behind a load balancer
+# with managed PostgreSQL (PITR), Redis and object storage — see docs/DEPLOYMENT.md.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: retailcore
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 5s, retries: 20 }
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  migrate:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    command: ["node", "--import", "tsx", "apps/api/src/migrate.ts"]
+    environment:
+      DATABASE_OWNER_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/retailcore
+    depends_on: { postgres: { condition: service_healthy } }
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment: &apienv
+      NODE_ENV: production
+      DATABASE_URL: postgres://rc_app:${RC_APP_PASSWORD:-rc_app_dev_password}@postgres:5432/retailcore
+      DATABASE_OWNER_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/retailcore
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (>= 32 random chars)}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?set MFA_ENCRYPTION_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:1420,tauri://localhost}
+    ports: ["4000:4000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    healthcheck: { test: ["CMD", "node", "-e", "fetch('http://localhost:4000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"], interval: 10s }
+
+  worker:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    command: ["node", "--import", "tsx", "apps/api/src/worker.ts"]
+    environment: *apienv
+    depends_on: { migrate: { condition: service_completed_successfully } }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile, args: { NEXT_PUBLIC_API_URL: "${PUBLIC_API_URL:-http://localhost:4000}" } }
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  pgdata:

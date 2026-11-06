@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { uuidv7 } from '@rc/domain';
+import { createHash } from 'node:crypto';
 import { config } from './config.js';
 import { installErrorHandler } from './lib/http.js';
 import authRoutes from './modules/auth.js';
@@ -25,7 +26,11 @@ export async function buildApp(opts: { logger?: boolean; rateLimit?: boolean } =
     trustProxy: true,
   });
   await app.register(cors, { origin: config.corsOrigins, credentials: true, allowedHeaders: ['authorization', 'content-type', 'idempotency-key', 'x-company-id', 'x-request-id', 'if-match', 'x-client-version'] });
-  if (opts.rateLimit ?? true) await app.register(rateLimit, { global: true, max: 1200, timeWindow: '1 minute' });
+  if (opts.rateLimit ?? true) {
+    // keyed per bearer/device credential (stores share one NAT IP), falling back to client IP
+    await app.register(rateLimit, { global: true, max: Number(process.env.RATE_LIMIT_MAX ?? 1200), timeWindow: '1 minute', allowList: (req) => req.url === '/health' || req.url === '/ready',
+      keyGenerator: (req) => { const a = req.headers.authorization; return a ? `a:${createHash('sha256').update(a).digest('base64url').slice(0, 22)}` : `ip:${req.ip}`; } });
+  }
   installErrorHandler(app);
   app.addHook('onSend', async (req, reply) => { reply.header('x-request-id', req.id); reply.header('x-content-type-options', 'nosniff'); reply.header('referrer-policy', 'no-referrer'); });
 
