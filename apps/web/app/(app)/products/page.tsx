@@ -9,7 +9,7 @@ import { useMe } from '@/components/shell';
 export default function Products() {
   const { t, locale } = useI18n();
   const { can } = useMe();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(() => (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('q') ?? '' : ''));
   const [rows, setRows] = useState<any[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -1,5 +1,6 @@
 import type { ar } from './messages-ar';
 export const en: Record<keyof typeof ar, string> = {
+ "salesAnalysis": "Sales analysis", "movements": "Movements", "source": "Source", "openDoc": "Open document", "drillHint": "Click any number to see its details",
  "appName": "RetailCore",
  "tagline": "Integrated ERP for retail chains",
  "login": "Sign in",

@@ -16,6 +16,7 @@ import accountingRoutes from './modules/accounting/routes.js';
 import workflowRoutes from './modules/workflow.js';
 import reportingRoutes from './modules/reporting.js';
 import hrRoutes from './modules/hr.js';
+import navigationRoutes from './modules/navigation.js';
 import { getPool } from './lib/db.js';
 
 export async function buildApp(opts: { logger?: boolean; rateLimit?: boolean } = {}): Promise<FastifyInstance> {
@@ -37,6 +38,6 @@ export async function buildApp(opts: { logger?: boolean; rateLimit?: boolean } =
   app.get('/health', async () => ({ status: 'ok' }));
   app.get('/ready', async () => { await getPool().query('SELECT 1'); return { status: 'ready' }; });
 
-  for (const r of [authRoutes, orgRoutes, catalogRoutes, pricingRoutes, inventoryRoutes, purchasingRoutes, posRoutes, accountingRoutes, workflowRoutes, reportingRoutes, hrRoutes]) await app.register(r);
+  for (const r of [authRoutes, orgRoutes, catalogRoutes, pricingRoutes, inventoryRoutes, purchasingRoutes, posRoutes, accountingRoutes, workflowRoutes, reportingRoutes, hrRoutes, navigationRoutes]) await app.register(r);
   return app;
 }

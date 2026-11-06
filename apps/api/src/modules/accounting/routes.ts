@@ -48,14 +48,14 @@ export async function incomeStatement(tx: Tx, companyId: string, from: string, t
   const accs = await accounts(tx, companyId);
   const t = await accountTotals(tx, companyId, from, to, branchId);
   const g: Record<string, Dec> = { revenue: ZERO, contra: ZERO, cogs: ZERO, otherIncome: ZERO, opex: ZERO };
-  const lines: { code: string; nameAr: string; nameEn: string; group: string; amount: string }[] = [];
+  const lines: { accountId: string; code: string; nameAr: string; nameEn: string; group: string; amount: string }[] = [];
   for (const r of t) {
     const a = accs.get(r.account_id);
     if (!a || (a.type !== 'income' && a.type !== 'expense')) continue;
     const bal = dec(r.credit).sub(dec(r.debit)); // income positive
     const group = a.type === 'income' ? (a.subtype === 'revenue' ? 'revenue' : a.subtype === 'contra_revenue' ? 'contra' : 'otherIncome') : (a.subtype === 'cogs' ? 'cogs' : 'opex');
     g[group] = g[group]!.add(bal);
-    lines.push({ code: a.code, nameAr: a.name_ar, nameEn: a.name_en, group, amount: fmt(a.type === 'income' ? bal : bal.neg(), 2) });
+    lines.push({ accountId: a.id, code: a.code, nameAr: a.name_ar, nameEn: a.name_en, group, amount: fmt(a.type === 'income' ? bal : bal.neg(), 2) });
   }
   const netSales = g.revenue!.add(g.contra!);
   const grossProfit = netSales.add(g.cogs!);
@@ -68,7 +68,7 @@ export async function incomeStatement(tx: Tx, companyId: string, from: string, t
 export async function balanceSheet(tx: Tx, companyId: string, asOf: string) {
   const accs = await accounts(tx, companyId);
   const t = await accountTotals(tx, companyId, null, asOf);
-  const groups: Record<string, { code: string; nameAr: string; nameEn: string; amount: string }[]> = { asset: [], liability: [], equity: [] };
+  const groups: Record<string, { accountId?: string; code: string; nameAr: string; nameEn: string; amount: string }[]> = { asset: [], liability: [], equity: [] };
   let assets = ZERO, liabilities = ZERO, equity = ZERO, earnings = ZERO;
   for (const r of t) {
     const a = accs.get(r.account_id);
@@ -77,7 +77,7 @@ export async function balanceSheet(tx: Tx, companyId: string, asOf: string) {
     if (a.type === 'income' || a.type === 'expense') { earnings = earnings.sub(dr); continue; }
     const amount = a.type === 'asset' ? dr : dr.neg();
     if (a.type === 'asset') assets = assets.add(amount); else if (a.type === 'liability') liabilities = liabilities.add(amount); else equity = equity.add(amount);
-    if (!amount.isZero()) groups[a.type]!.push({ code: a.code, nameAr: a.name_ar, nameEn: a.name_en, amount: fmt(amount, 2) });
+    if (!amount.isZero()) groups[a.type]!.push({ accountId: a.id, code: a.code, nameAr: a.name_ar, nameEn: a.name_en, amount: fmt(amount, 2) });
   }
   groups.equity!.push({ code: '—', nameAr: 'أرباح الفترة غير المرحلة', nameEn: 'Unclosed earnings', amount: fmt(earnings, 2) });
   const totalEq = equity.add(earnings);

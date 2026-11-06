@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { ProductPicker, LocationSelect, type PickedProduct } from '@/components/product-picker';
 import { useMe } from '@/components/shell';
 
@@ -17,7 +18,7 @@ export default function Adjustments() {
       <PageHead title={t('adjustments')}>{can('inventory.adjustment.write') ? <button className="btn primary" onClick={() => setOpen(true)}>{t('newAdjustment')}</button> : null}</PageHead>
       <ErrorBox error={docs.error} />
       <Table rows={docs.data?.data?.filter((d: any) => ['adjustment', 'scrap', 'transfer'].includes(d.kind))} cols={[
-        { key: 'number', label: t('number'), render: (r) => <span className="mono">{r.number}</span> }, { key: 'kind', label: t('type') }, { key: 'branch_code', label: t('branch') }, { key: 'reason_name', label: t('reason') },
+        { key: 'number', label: t('number'), render: (r) => <Go type="stock_source" id={r.id}><span className="mono">{r.number}</span></Go> }, { key: 'kind', label: t('type') }, { key: 'branch_code', label: t('branch') }, { key: 'reason_name', label: t('reason') },
         { key: 'total_value', label: t('value'), num: true, render: (r) => money(r.total_value, locale) }, { key: 'created_at', label: t('date'), render: (r) => dt(r.created_at, locale) }, { key: 'state', label: t('status'), render: (r) => <State s={r.state} /> },
       ]} />
       {open ? <NewAdjustment onClose={() => { setOpen(false); void docs.reload(); }} /> : null}

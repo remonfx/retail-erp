@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, qs } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, PageHead, Table, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { useMe } from '@/components/shell';
 
 export default function Suppliers() {
@@ -14,7 +15,7 @@ export default function Suppliers() {
     <>
       <PageHead title={t('suppliers')}><input style={{ width: 260 }} placeholder={t('search')} value={q} onChange={(e) => setQ(e.target.value)} />{can('purchasing.supplier.write') ? <button className="btn primary" onClick={() => setOpen(true)}>{t('newSupplier')}</button> : null}</PageHead>
       <ErrorBox error={list.error} />
-      <Table rows={list.data?.data} cols={[{ key: 'code', label: t('code'), render: (r) => <span className="mono">{r.code}</span> }, { key: 'name_ar', label: t('nameAr') }, { key: 'tax_registration_no', label: t('taxRegistrationNo') }, { key: 'phone', label: t('phone') }, { key: 'payment_terms_days', label: t('paymentTerms'), num: true }, { key: 'consignment', label: 'Consignment', render: (r) => r.consignment ? '✓' : '' }]} />
+      <Table rows={list.data?.data} cols={[{ key: 'code', label: t('code'), render: (r) => <span className="mono">{r.code}</span> }, { key: 'name_ar', label: t('nameAr'), render: (r) => <Go type="supplier" id={r.id}>{r.name_ar}</Go> }, { key: 'tax_registration_no', label: t('taxRegistrationNo') }, { key: 'phone', label: t('phone') }, { key: 'payment_terms_days', label: t('paymentTerms'), num: true }, { key: 'consignment', label: 'Consignment', render: (r) => r.consignment ? '✓' : '' }]} />
       {open ? <NewSupplier onClose={() => { setOpen(false); void list.reload(); }} /> : null}
     </>
   );

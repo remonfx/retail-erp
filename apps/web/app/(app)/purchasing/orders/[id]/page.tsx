@@ -3,6 +3,7 @@ import { use, useState } from 'react';
 import { get, post } from '@/lib/api';
 import { useI18n, money, qty, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State, Modal } from '@/components/ui';
+import { Go } from '@/components/links';
 import { useMe } from '@/components/shell';
 
 export default function OrderDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -26,13 +27,13 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
       </PageHead>
       <ErrorBox error={a.error} /><Ok msg={a.ok} />
       <div className="card form-grid" style={{ marginBottom: 14 }}>
-        <div><h3>{t('supplier')}</h3>{d.supplier_name}</div><div><h3>{t('date')}</h3>{dt(d.order_date, locale)}</div>
+        <div><h3>{t('supplier')}</h3><Go type="supplier" id={d.supplier_id}>{d.supplier_name}</Go></div><div><h3>{t('date')}</h3>{dt(d.order_date, locale)}</div>
         <div><h3>{t('subtotal')}</h3>{money(d.subtotal, locale)}</div><div><h3>{t('tax')}</h3>{money(d.tax_total, locale)}</div><div><h3>{t('total')}</h3><strong>{money(d.total, locale)}</strong></div>
       </div>
-      <Table rows={d.lines} cols={[{ key: 'line_no', label: '#' }, { key: 'sku', label: t('sku'), render: (r) => <span className="mono">{r.sku}</span> }, { key: 'name_ar', label: t('nameAr') },
+      <Table rows={d.lines} cols={[{ key: 'line_no', label: '#' }, { key: 'sku', label: t('sku'), render: (r) => <Go type="product" id={r.product_id}><span className="mono">{r.sku}</span></Go> }, { key: 'name_ar', label: t('nameAr'), render: (r) => <Go type="product" id={r.product_id}>{r.name_ar}</Go> },
         { key: 'qty', label: t('ordered'), num: true, render: (r) => qty(r.qty, locale) }, { key: 'qty_received', label: t('received'), num: true, render: (r) => qty(r.qty_received, locale) }, { key: 'qty_invoiced', label: 'Invoiced', num: true, render: (r) => qty(r.qty_invoiced, locale) },
         { key: 'unit_price', label: t('unitPrice'), num: true, render: (r) => money(r.unit_price, locale) }]} />
-      {d.receipts?.length ? <><h2 style={{ marginTop: 16 }}>GRN</h2><Table rows={d.receipts} cols={[{ key: 'number', label: t('number'), render: (r) => <span className="mono">{r.number}</span> }, { key: 'received_at', label: t('date'), render: (r) => dt(r.received_at, locale) }]} /></> : null}
+      {d.receipts?.length ? <><h2 style={{ marginTop: 16 }}>GRN</h2><Table rows={d.receipts} cols={[{ key: 'number', label: t('number'), render: (r) => <Go type="pur_receipt" id={r.id}><span className="mono">{r.number}</span></Go> }, { key: 'received_at', label: t('date'), render: (r) => dt(r.received_at, locale) }]} /></> : null}
       {rcv ? <ReceiveModal order={d} onClose={() => { setRcv(false); void o.reload(); }} /> : null}
     </>
   );

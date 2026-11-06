@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, qs } from '@/lib/api';
 import { useI18n, money } from '@/lib/i18n';
 import { useAsync, ErrorBox, PageHead, Table, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { BranchSelect } from '@/components/shell';
 
 type Tab = 'tb' | 'is' | 'bs' | 'cf' | 'vat' | 'ap' | 'rec';
@@ -34,22 +35,22 @@ export default function Reports() {
       <ErrorBox error={r.error} />
       {d && tab === 'tb' ? <>
         <p><span className={`badge ${d.balanced ? 'ok' : 'danger'}`}>{d.balanced ? t('balanced') : t('notBalanced')}</span></p>
-        <Table rows={d.rows} rowKey={(x) => x.accountId} cols={[{ key: 'code', label: t('code'), render: (x) => <span className="mono">{x.code}</span> }, { key: 'name', label: t('account'), render: (x) => locale === 'ar' ? x.nameAr : x.nameEn },
-          { key: 'opening', label: t('opening'), num: true, render: (x) => m(x.opening) }, { key: 'debit', label: t('debit'), num: true, render: (x) => m(x.debit) }, { key: 'credit', label: t('credit'), num: true, render: (x) => m(x.credit) }, { key: 'closing', label: t('closing'), num: true, render: (x) => m(x.closing) }]}
+        <Table rows={d.rows} rowKey={(x) => x.accountId} cols={[{ key: 'code', label: t('code'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}><span className="mono">{x.code}</span></Go> }, { key: 'name', label: t('account'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}>{locale === 'ar' ? x.nameAr : x.nameEn}</Go> },
+          { key: 'opening', label: t('opening'), num: true, render: (x) => m(x.opening) }, { key: 'debit', label: t('debit'), num: true, render: (x) => m(x.debit) }, { key: 'credit', label: t('credit'), num: true, render: (x) => m(x.credit) }, { key: 'closing', label: t('closing'), num: true, render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}>{m(x.closing)}</Go> }]}
           footer={<tr><td colSpan={3}>{t('total')}</td><td className="num">{m(d.totals.debit)}</td><td className="num">{m(d.totals.credit)}</td><td /></tr>} />
       </> : null}
       {d && tab === 'is' ? <div className="grid c2">
         <div className="card"><Table rows={Object.entries(d.summary).map(([k, v]) => ({ id: k, k, v }))} cols={[{ key: 'k', label: '' }, { key: 'v', label: t('amount'), num: true, render: (x) => x.k === 'grossMarginPct' ? `${x.v}%` : m(x.v) }]} /></div>
-        <Table rows={d.lines} rowKey={(x) => x.code} cols={[{ key: 'code', label: t('code'), render: (x) => <span className="mono">{x.code}</span> }, { key: 'nameAr', label: t('account'), render: (x) => locale === 'ar' ? x.nameAr : x.nameEn }, { key: 'amount', label: t('amount'), num: true, render: (x) => m(x.amount) }]} />
+        <Table rows={d.lines} rowKey={(x) => x.code} cols={[{ key: 'code', label: t('code'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}><span className="mono">{x.code}</span></Go> }, { key: 'nameAr', label: t('account'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}>{locale === 'ar' ? x.nameAr : x.nameEn}</Go> }, { key: 'amount', label: t('amount'), num: true, render: (x) => <Go type="account" id={x.accountId} extra={{ from: applied.from, to: applied.to }}>{m(x.amount)}</Go> }]} />
       </div> : null}
       {d && tab === 'bs' ? <>
         <p><span className={`badge ${d.balanced ? 'ok' : 'danger'}`}>{d.balanced ? t('balanced') : t('notBalanced')}</span></p>
-        <div className="grid c2">{(['asset', 'liability', 'equity'] as const).map((g) => <div key={g}><h2>{g}</h2><Table rows={d.groups[g]} rowKey={(x) => x.code} cols={[{ key: 'code', label: t('code') }, { key: 'nameAr', label: t('account'), render: (x) => locale === 'ar' ? x.nameAr : x.nameEn }, { key: 'amount', label: t('amount'), num: true, render: (x) => m(x.amount) }]} /></div>)}</div>
+        <div className="grid c2">{(['asset', 'liability', 'equity'] as const).map((g) => <div key={g}><h2>{g}</h2><Table rows={d.groups[g]} rowKey={(x) => x.code} cols={[{ key: 'code', label: t('code'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: '2000-01-01', to: applied.to }}>{x.code}</Go> }, { key: 'nameAr', label: t('account'), render: (x) => <Go type="account" id={x.accountId} extra={{ from: '2000-01-01', to: applied.to }}>{locale === 'ar' ? x.nameAr : x.nameEn}</Go> }, { key: 'amount', label: t('amount'), num: true, render: (x) => <Go type="account" id={x.accountId} extra={{ from: '2000-01-01', to: applied.to }}>{m(x.amount)}</Go> }]} /></div>)}</div>
         <div className="card" style={{ marginTop: 12 }}>Assets {m(d.totals.assets)} = Liabilities + Equity {m(d.totals.liabilitiesAndEquity)}</div>
       </> : null}
       {d && tab === 'cf' ? <div className="card"><Table rows={[['netIncome', d.netIncome], ['operating', d.operating], ['investing', d.investing], ['financing', d.financing], ['netChangeInCash', d.netChangeInCash], ['cashAccountsChange', d.cashAccountsChange]].map(([k, v]) => ({ id: k, k, v }))} cols={[{ key: 'k', label: '' }, { key: 'v', label: t('amount'), num: true, render: (x) => m(x.v) }]} /><p><span className={`badge ${d.reconciles ? 'ok' : 'danger'}`}>{d.reconciles ? t('balanced') : t('notBalanced')}</span></p></div> : null}
       {d && tab === 'vat' ? <Table rows={d} rowKey={(x, i) => `${x.code}-${i}`} cols={[{ key: 'code', label: t('code') }, { key: 'name_ar', label: t('account') }, { key: 'tax_code', label: t('tax') }, { key: 'base', label: 'Base', num: true, render: (x) => m(x.base) }, { key: 'output_minus_input', label: t('amount'), num: true, render: (x) => m(x.output_minus_input) }]} /> : null}
-      {d && tab === 'ap' ? <Table rows={d} rowKey={(x) => x.supplier_id} cols={[{ key: 'name_ar', label: t('supplier') }, ...['current', 'd1_30', 'd31_60', 'd61_90', 'd90_plus', 'balance'].map((k) => ({ key: k, label: k, num: true, render: (x: any) => m(x[k]) }))]} /> : null}
+      {d && tab === 'ap' ? <Table rows={d} rowKey={(x) => x.supplier_id} cols={[{ key: 'name_ar', label: t('supplier'), render: (x: any) => <Go type="supplier" id={x.supplier_id}>{x.name_ar}</Go> }, ...['current', 'd1_30', 'd31_60', 'd61_90', 'd90_plus', 'balance'].map((k) => ({ key: k, label: k, num: true, render: (x: any) => m(x[k]) }))]} /> : null}
       {d && tab === 'rec' ? <div className="grid k4"><div className="card kpi"><div className="label">Sub-ledger</div><div className="val">{m(d.subledger)}</div></div><div className="card kpi"><div className="label">GL</div><div className="val">{m(d.gl)}</div></div><div className="card kpi"><div className="label">{t('difference')}</div><div className="val">{m(d.difference)}</div><span className={`badge ${d.reconciled ? 'ok' : 'danger'}`}>{d.reconciled ? t('balanced') : t('notBalanced')}</span></div><div className="card kpi"><div className="label">Pending</div><div className="val">{d.pendingPostings}</div></div></div> : null}
     </>
   );

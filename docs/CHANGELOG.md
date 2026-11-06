@@ -25,3 +25,11 @@ All notable changes to this project are documented here. Format: Keep a Changelo
 - Fastify instead of NestJS; raw SQL (`pg`) instead of Kysely; PostgreSQL outbox polling instead of BullMQ; `pg_trgm` instead of OpenSearch (benchmark shows it meets target at 1M SKUs); device auth = per-device secret over TLS (key-pair signing planned).
 ### Fixed
 - Catalog search under RLS: 17 s → p95 210 ms on 1M SKUs.
+
+## [0.3.0] — 2026-11-07 — Drill-down navigation
+### Added
+- Every number/document in the web app links to its origin: dashboard KPIs → sales analysis (month → day → category → product); trial balance / P&L / balance sheet → account ledger → journal entry → source document (POS session, supplier invoice, stock document, receipt, count, return); sessions → receipts → products; POs ↔ supplier cards ↔ invoices ↔ payments; product → movements → source; approvals → document under review.
+- New pages: journal entry, account ledger, POS session, POS receipt, stock source (any movement origin), supplier invoice, supplier card, sales analysis.
+- Ctrl+K command palette: pages, products (name/SKU/barcode), PO/invoice/document/journal/session numbers, receipts, suppliers.
+- API: `/search`, `/stock/sources/:id`, `/supplier-invoices/:id`, `/partners/:id`, `/journal-entries/by-source/:id`, `/products/:id/movements`; migration 0012 (lookup indexes).
+- Browser test `tools/e2e/drilldown.mjs` (12 click-through chains).

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, ErrorBox, PageHead, Table, State, Modal } from '@/components/ui';
+import { Go } from '@/components/links';
 import { BranchSelect } from '@/components/shell';
 
 export default function Sessions() {
@@ -15,9 +16,9 @@ export default function Sessions() {
       <PageHead title={t('sessions')}><div style={{ width: 240 }}><BranchSelect allowAll value={branchId} onChange={setBranch} /></div></PageHead>
       <ErrorBox error={list.error} />
       <Table rows={list.data?.data} cols={[
-        { key: 'number', label: t('number'), render: (r) => <span className="mono">{r.number}</span> }, { key: 'branch_code', label: t('branch') }, { key: 'terminal_code', label: t('terminal') }, { key: 'opened_by_name', label: t('cashier') },
+        { key: 'number', label: t('number'), render: (r) => <Go type="pos_session" id={r.id}><span className="mono">{r.number}</span></Go> }, { key: 'branch_code', label: t('branch') }, { key: 'terminal_code', label: t('terminal') }, { key: 'opened_by_name', label: t('cashier') },
         { key: 'opened_at', label: t('openedAt'), render: (r) => dt(r.opened_at, locale) }, { key: 'closed_at', label: t('closedAt'), render: (r) => dt(r.closed_at, locale) },
-        { key: 'sales_total', label: t('total'), num: true, render: (r) => money(r.sales_total, locale) },
+        { key: 'sales_total', label: t('total'), num: true, render: (r) => <Go type="pos_session" id={r.id}>{money(r.sales_total, locale)}</Go> },
         { key: 'cash_difference', label: t('difference'), num: true, render: (r) => <span style={{ color: Number(r.cash_difference) < 0 ? 'var(--danger)' : undefined }}>{money(r.cash_difference, locale)}</span> },
         { key: 'state', label: t('status'), render: (r) => <State s={r.state} /> }, { key: 'x', label: '', render: (r) => <button className="btn sm" onClick={() => setZ(r.id)}>{t('zReport')}</button> },
       ]} />

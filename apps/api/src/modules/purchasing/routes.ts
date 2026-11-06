@@ -106,7 +106,7 @@ export default async function purchasingRoutes(app: FastifyInstance) {
   route(app, 'GET', '/api/v1/purchase-orders/:id', { perm: 'purchasing.supplier.read' }, async ({ tx, companyId, params }) => {
     const o = (await tx.query(`SELECT o.*, s.name_ar AS supplier_name FROM pur_order o JOIN par_partner s ON s.id = o.supplier_id WHERE o.id = $1 AND o.company_id = $2`, [params.id, companyId])).rows[0];
     if (!o) throw notFound('PURCHASE_ORDER');
-    o.lines = (await tx.query(`SELECT l.*, v.sku, p.name_ar, p.name_en FROM pur_order_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.order_id = $1 ORDER BY l.line_no`, [params.id])).rows;
+    o.lines = (await tx.query(`SELECT l.*, v.sku, p.id AS product_id, p.name_ar, p.name_en FROM pur_order_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.order_id = $1 ORDER BY l.line_no`, [params.id])).rows;
     o.receipts = (await tx.query('SELECT * FROM pur_receipt WHERE order_id = $1 ORDER BY received_at', [params.id])).rows;
     return o;
   });

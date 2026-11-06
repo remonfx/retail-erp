@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, PageHead, Table, State, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { ProductPicker, type PickedProduct } from '@/components/product-picker';
 import { BranchSelect, useMe } from '@/components/shell';
 
@@ -22,7 +23,7 @@ export default function Orders() {
       </PageHead>
       <ErrorBox error={list.error} />
       <Table rows={list.data?.data} cols={[
-        { key: 'number', label: t('number'), render: (r) => <Link className="mono" href={`/purchasing/orders/${r.id}`}>{r.number}</Link> }, { key: 'supplier_name', label: t('supplier') }, { key: 'branch_code', label: t('branch') },
+        { key: 'number', label: t('number'), render: (r) => <Link className="mono" href={`/purchasing/orders/${r.id}`}>{r.number}</Link> }, { key: 'supplier_name', label: t('supplier'), render: (r) => <Go type="supplier" id={r.supplier_id}>{r.supplier_name}</Go> }, { key: 'branch_code', label: t('branch') },
         { key: 'order_date', label: t('date'), render: (r) => dt(r.order_date, locale) }, { key: 'total', label: t('total'), num: true, render: (r) => money(r.total, locale) }, { key: 'state', label: t('status'), render: (r) => <State s={r.state} /> },
       ]} />
       {open ? <NewPO onClose={() => setOpen(false)} /> : null}

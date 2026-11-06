@@ -121,7 +121,7 @@ export default async function posRoutes(app: FastifyInstance) {
     if (!o) throw notFound('ORDER');
     const bf = actor.kind === 'device' ? [actor.deviceBranchId!] : branchFilter(actor, 'sales.order.read', companyId);
     if (bf && !bf.includes(o.branch_id)) throw notFound('ORDER');
-    o.lines = (await tx.query(`SELECT l.*, v.sku, p.name_ar, p.name_en, coalesce((SELECT sum(r.qty) FROM pos_order_line r WHERE r.return_of_line_id = l.id), 0) AS returned_qty FROM pos_order_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.order_id = $1 AND l.business_date = $2`, [o.id, o.business_date])).rows;
+    o.lines = (await tx.query(`SELECT l.*, v.sku, p.id AS product_id, p.name_ar, p.name_en, coalesce((SELECT sum(r.qty) FROM pos_order_line r WHERE r.return_of_line_id = l.id), 0) AS returned_qty FROM pos_order_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.order_id = $1 AND l.business_date = $2`, [o.id, o.business_date])).rows;
     o.payments = (await tx.query('SELECT * FROM pos_payment WHERE order_id = $1 AND business_date = $2', [o.id, o.business_date])).rows;
     return o;
   });

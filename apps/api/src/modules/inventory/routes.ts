@@ -68,7 +68,7 @@ export default async function inventoryRoutes(app: FastifyInstance) {
     const bf = branchFilter(actor, 'inventory.stock.read', companyId);
     const cur = decodeCursor(query.cursor);
     const showCost = can(actor, 'catalog.cost.view', { companyId });
-    const rows = (await tx.query(`SELECT (q.location_id::text || q.variant_id::text || q.lot_id::text || q.owner_id::text) AS id, q.location_id, l.code AS location_code, l.branch_id, q.variant_id, v.sku, p.name_ar, p.name_en,
+    const rows = (await tx.query(`SELECT (q.location_id::text || q.variant_id::text || q.lot_id::text || q.owner_id::text) AS id, q.location_id, l.code AS location_code, l.branch_id, q.variant_id, v.sku, p.id AS product_id, p.name_ar, p.name_en,
         q.lot_id, lot.lot_no, lot.expiry_date, q.owner_id, q.qty_on_hand, q.qty_reserved, (q.qty_on_hand - q.qty_reserved) AS qty_available,
         CASE WHEN $9 THEN round(q.qty_on_hand * CASE WHEN c.qty > 0 THEN c.value / c.qty ELSE c.last_avg END, 2) END AS value
       FROM inv_stock_quant q JOIN inv_location l ON l.id = q.location_id JOIN cat_variant v ON v.id = q.variant_id JOIN cat_product p ON p.id = v.product_id
@@ -155,7 +155,7 @@ export default async function inventoryRoutes(app: FastifyInstance) {
   route(app, 'GET', '/api/v1/stock-documents/:id', { perm: 'inventory.stock.read' }, async ({ tx, companyId, params }) => {
     const d = (await tx.query('SELECT * FROM inv_stock_document WHERE id = $1 AND company_id = $2', [params.id, companyId])).rows[0];
     if (!d) throw notFound('DOCUMENT');
-    d.lines = (await tx.query(`SELECT l.*, v.sku, p.name_ar, p.name_en FROM inv_stock_document_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.document_id = $1`, [params.id])).rows;
+    d.lines = (await tx.query(`SELECT l.*, v.sku, p.id AS product_id, p.name_ar, p.name_en FROM inv_stock_document_line l JOIN cat_variant v ON v.id = l.variant_id JOIN cat_product p ON p.id = v.product_id WHERE l.document_id = $1`, [params.id])).rows;
     d.moves = (await tx.query('SELECT * FROM inv_stock_move WHERE ref_doc_id = $1 ORDER BY moved_at', [params.id])).rows;
     return d;
   });

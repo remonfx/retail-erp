@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { BranchSelect, useMe } from '@/components/shell';
 
 export default function Invoices() {
@@ -16,7 +17,7 @@ export default function Invoices() {
       <PageHead title={t('supplierInvoices')}>{can('purchasing.invoice.write') ? <button className="btn primary" onClick={() => setOpen(true)}>{t('newInvoice')}</button> : null}</PageHead>
       <ErrorBox error={list.error ?? a.error} /><Ok msg={a.ok} />
       <Table rows={list.data?.data} cols={[
-        { key: 'number', label: t('number'), render: (r) => <span className="mono">{r.number}</span> }, { key: 'supplier_invoice_no', label: t('invoiceNo') }, { key: 'supplier_name', label: t('supplier') },
+        { key: 'number', label: t('number'), render: (r) => <Go type="supplier_invoice" id={r.id}><span className="mono">{r.number}</span></Go> }, { key: 'supplier_invoice_no', label: t('invoiceNo') }, { key: 'supplier_name', label: t('supplier'), render: (r) => <Go type="supplier" id={r.supplier_id}>{r.supplier_name}</Go> },
         { key: 'invoice_date', label: t('date'), render: (r) => dt(r.invoice_date, locale) }, { key: 'total', label: t('total'), num: true, render: (r) => money(r.total, locale) }, { key: 'balance', label: t('remaining'), num: true, render: (r) => money(r.balance, locale) },
         { key: 'match_status', label: t('matchStatus'), render: (r) => <span title={(r.match_details ?? []).map((m: any) => m.detail).join('\n')}><State s={r.match_status} /></span> }, { key: 'state', label: t('status'), render: (r) => <State s={r.state} /> },
         { key: 'x', label: t('actions'), render: (r) => r.state === 'draft' && r.match_status !== 'exception' ? <button className="btn sm primary" disabled={a.busy} onClick={() => a.run(async () => { await post(`/api/v1/supplier-invoices/${r.id}/post`); await list.reload(); }, t('saved'))}>{t('post')}</button> : null },

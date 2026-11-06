@@ -1,4 +1,5 @@
 export const ar = {
+  salesAnalysis: 'تحليل المبيعات', movements: 'حركة الصنف', source: 'المصدر', openDoc: 'فتح المستند', drillHint: 'اضغط على أي رقم لعرض تفاصيله',
   appName: 'ريتيل كور', tagline: 'نظام ERP متكامل لسلاسل التجزئة',
   login: 'تسجيل الدخول', logout: 'تسجيل الخروج', email: 'البريد الإلكتروني', password: 'كلمة المرور', totp: 'رمز التحقق (MFA)', signup: 'إنشاء حساب جديد', haveAccount: 'لديك حساب؟', noAccount: 'ليس لديك حساب؟',
   tenantName: 'اسم المنشأة', slug: 'المعرّف (بالإنجليزية)', ownerName: 'اسم المالك', companyNameAr: 'الاسم القانوني للشركة', branchNameAr: 'اسم الفرع الرئيسي', branchCode: 'كود الفرع', plan: 'الباقة', taxRegistrationNo: 'رقم التسجيل الضريبي',

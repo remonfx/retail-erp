@@ -19,7 +19,8 @@ Arabic RTL first, English LTR, light/dark, EGP, Africa/Cairo.
 | POS sync: exactly-once under concurrent replays, tampered payload quarantine, never-discard quarantine, offline negative stock exceptions, returns, session close → balanced GL | ✅ | `pos.test.ts` |
 | POS app engine: offline commit, durable outbox, power-loss atomicity, lost-ack retry without duplicates, PIN login, X/Z | ✅ | `apps/pos-desktop/test/engine.e2e.test.ts` (engine ↔ real API ↔ PostgreSQL) |
 | POS UI in browser: enroll → login → session → scan (incl. 1.5 kg scale label) → pay → synced | ✅ | `tools/e2e/pos-flow.mjs` |
-| Web back-office: 23 routes, all 17 app screens load with zero errors; RTL/LTR + dark; no horizontal scroll at 390 px | ✅ | `tools/e2e/smoke.mjs` |
+| Web back-office: 32 routes, all 17 list screens load with zero errors; RTL/LTR + dark; no horizontal scroll at 390 px | ✅ | `tools/e2e/smoke.mjs` |
+| Drill-down: every KPI, total, document number and product links to its source; Ctrl+K search (12 click chains) | ✅ | `tools/e2e/drilldown.mjs` |
 | Rust local journal (SQLite WAL + synchronous=FULL, atomic tx) | ✅ | `cargo test -p pos-store` |
 | Mobile app (dashboard, camera barcode lookup, approvals, offline stocktake, attendance) | ✅ typecheck + Android bundle | `npx expo export` |
 | Scale: 1,000,013 SKUs — product search p95 **210 ms**, barcode p95 **36 ms** (20 concurrent) | ✅ | `docs/TESTING.md` §6 |

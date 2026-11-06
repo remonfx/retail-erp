@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State } from '@/components/ui';
+import { Go } from '@/components/links';
 
 export default function Approvals() {
   const { t, locale } = useI18n();
@@ -22,7 +23,7 @@ export default function Approvals() {
       <ErrorBox error={error ?? a.error} /><Ok msg={a.ok} />
       <Table rows={data} cols={[
         { key: 'doc_type', label: t('type'), render: (r) => <span className="badge info">{r.doc_type.replace(/_/g, ' ')}</span> },
-        { key: 'summary', label: t('details') },
+        { key: 'summary', label: t('details'), render: (r) => <Go type={({ stock_adjustment: 'stock_source', purchase_order: 'purchase_order', supplier_invoice_exception: 'supplier_invoice' } as Record<string, string>)[r.doc_type] ?? null} id={r.doc_id}>{r.summary}</Go> },
         { key: 'branch_code', label: t('branch') },
         { key: 'amount', label: t('amount'), num: true, render: (r) => money(r.amount, locale) },
         { key: 'requested_by_name', label: t('requestedBy') },

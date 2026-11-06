@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { get, post, session } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { PinModal } from '@/components/pin-modal';
+import { CommandPalette } from '@/components/command-palette';
 
 export interface Me {
   user: { id: string; email: string; full_name: string; is_tenant_owner: boolean; mfa_enabled: boolean };
@@ -21,7 +22,7 @@ const NAV: { group: string; items: { href: string; label: string; perm?: string 
   { group: 'catalog', items: [{ href: '/products', label: 'products', perm: 'catalog.product.read' }] },
   { group: 'inventory', items: [{ href: '/inventory/stock', label: 'stock', perm: 'inventory.stock.read' }, { href: '/inventory/adjustments', label: 'adjustments', perm: 'inventory.stock.read' }, { href: '/inventory/transfers', label: 'transfers', perm: 'inventory.stock.read' }] },
   { group: 'purchasing', items: [{ href: '/purchasing/orders', label: 'purchaseOrders', perm: 'purchasing.supplier.read' }, { href: '/purchasing/invoices', label: 'supplierInvoices', perm: 'purchasing.supplier.read' }, { href: '/purchasing/suppliers', label: 'suppliers', perm: 'purchasing.supplier.read' }] },
-  { group: 'pos', items: [{ href: '/pos/sessions', label: 'sessions', perm: 'sales.order.read' }, { href: '/pos/sync', label: 'syncMonitor', perm: 'pos.sync.monitor' }] },
+  { group: 'pos', items: [{ href: '/reports/sales', label: 'salesAnalysis', perm: 'reporting.dashboard.read' }, { href: '/pos/sessions', label: 'sessions', perm: 'sales.order.read' }, { href: '/pos/sync', label: 'syncMonitor', perm: 'pos.sync.monitor' }] },
   { group: 'accounting', items: [{ href: '/accounting/journals', label: 'journals', perm: 'accounting.read' }, { href: '/accounting/reports', label: 'reports', perm: 'accounting.reports.read' }] },
   { group: 'settings', items: [{ href: '/settings/users', label: 'users', perm: 'core.user.read' }, { href: '/settings/branches', label: 'branches', perm: 'core.org.read' }, { href: '/settings/devices', label: 'devices', perm: 'core.device.manage' }, { href: '/settings/subscription', label: 'subscription' }] },
 ];
@@ -82,6 +83,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </select>
             ) : <strong>{me.companies[0] ? (locale === 'ar' ? me.companies[0].legal_name_ar : me.companies[0].legal_name_en ?? me.companies[0].legal_name_ar) : ''}</strong>}
             {me.tenant.status === 'trial' ? <span className="badge warn">trial</span> : null}
+            <CommandPalette />
             <div className="spacer" />
             <button className="btn sm" onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'auto' : 'dark')} title={t('theme')}>{theme === 'dark' ? '☾' : theme === 'light' ? '☀' : '◐'}</button>
             <button className="btn sm" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>{t('language')}</button>

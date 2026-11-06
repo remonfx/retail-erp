@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, qty, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { ProductPicker, LocationSelect, type PickedProduct } from '@/components/product-picker';
 import { useMe } from '@/components/shell';
 
@@ -19,7 +20,7 @@ export default function Transfers() {
       <PageHead title={t('transfers')}>{can('inventory.transfer.write') ? <button className="btn primary" onClick={() => setOpen(true)}>{t('newTransfer')}</button> : null}</PageHead>
       <ErrorBox error={docs.error ?? a.error} /><Ok msg={a.ok} />
       <Table rows={docs.data?.data} cols={[
-        { key: 'number', label: t('number'), render: (r) => <span className="mono">{r.number}</span> }, { key: 'branch_code', label: t('branch') },
+        { key: 'number', label: t('number'), render: (r) => <Go type="stock_source" id={r.id}><span className="mono">{r.number}</span></Go> }, { key: 'branch_code', label: t('branch') },
         { key: 'total_value', label: t('value'), num: true, render: (r) => money(r.total_value, locale) }, { key: 'created_at', label: t('date'), render: (r) => dt(r.created_at, locale) }, { key: 'state', label: t('status'), render: (r) => <State s={r.state} /> },
         { key: 'x', label: t('actions'), render: (r) => r.state === 'draft' ? <button className="btn sm primary" disabled={a.busy} onClick={() => dispatch(r.id)}>{t('dispatch')}</button> : r.state === 'in_transit' ? <button className="btn sm primary" onClick={() => setReceiving(r.id)}>{t('receive')}</button> : null },
       ]} />

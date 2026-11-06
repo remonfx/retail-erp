@@ -22,8 +22,8 @@ export default async function reportingRoutes(app: FastifyInstance) {
     const byDay = (await tx.query(`SELECT business_date, sum(net) AS net_sales, sum(net - cost) AS gross_profit FROM rep_sales_daily WHERE ${where} GROUP BY 1 ORDER BY 1`, p)).rows;
     const byCategory = (await tx.query(`SELECT r.category_id, c.name_ar, sum(r.net) AS net_sales, sum(r.net - r.cost) AS gross_profit FROM rep_sales_daily r LEFT JOIN cat_category c ON c.id = r.category_id
         WHERE r.company_id = $1 AND r.business_date BETWEEN $2 AND $3 AND ($4::uuid[] IS NULL OR r.branch_id = ANY($4)) AND ($5::uuid IS NULL OR r.branch_id = $5) GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20`, p)).rows;
-    const topProducts = (await tx.query(`SELECT r.variant_id, v.sku, pr.name_ar, sum(r.qty) AS qty, sum(r.net) AS net_sales, sum(r.net - r.cost) AS gross_profit FROM rep_sales_daily r JOIN cat_variant v ON v.id = r.variant_id JOIN cat_product pr ON pr.id = v.product_id
-        WHERE r.company_id = $1 AND r.business_date BETWEEN $2 AND $3 AND ($4::uuid[] IS NULL OR r.branch_id = ANY($4)) AND ($5::uuid IS NULL OR r.branch_id = $5) GROUP BY 1, 2, 3 ORDER BY 5 DESC LIMIT 20`, p)).rows;
+    const topProducts = (await tx.query(`SELECT r.variant_id, v.sku, pr.id AS product_id, pr.name_ar, sum(r.qty) AS qty, sum(r.net) AS net_sales, sum(r.net - r.cost) AS gross_profit FROM rep_sales_daily r JOIN cat_variant v ON v.id = r.variant_id JOIN cat_product pr ON pr.id = v.product_id
+        WHERE r.company_id = $1 AND r.business_date BETWEEN $2 AND $3 AND ($4::uuid[] IS NULL OR r.branch_id = ANY($4)) AND ($5::uuid IS NULL OR r.branch_id = $5) GROUP BY 1, 2, 3, 4 ORDER BY 6 DESC LIMIT 20`, p)).rows;
     const showFinance = can(actor, 'accounting.reports.read', { companyId });
     const finance = showFinance ? (await tx.query(`SELECT
         (SELECT coalesce(sum(b.debit - b.credit), 0) FROM acc_account_balance b JOIN acc_account a ON a.id = b.account_id WHERE b.company_id = $1 AND a.subtype IN ('cash','bank')) AS cash_position,

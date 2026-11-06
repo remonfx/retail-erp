@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { get, qs } from '@/lib/api';
 import { useI18n, money, qty, dt } from '@/lib/i18n';
 import { ErrorBox, PageHead, Table, errText, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { BranchSelect } from '@/components/shell';
 
 export default function Stock() {
@@ -24,8 +25,8 @@ export default function Stock() {
       </PageHead>
       <ErrorBox error={error} />
       <Table rows={rows} cols={[
-        { key: 'sku', label: t('sku'), render: (r) => <span className="mono">{r.sku}</span> },
-        { key: 'name', label: t('nameAr'), render: (r) => locale === 'ar' ? r.name_ar : r.name_en ?? r.name_ar },
+        { key: 'sku', label: t('sku'), render: (r) => <Go type="product" id={r.product_id}><span className="mono">{r.sku}</span></Go> },
+        { key: 'name', label: t('nameAr'), render: (r) => <Go type="product" id={r.product_id}>{locale === 'ar' ? r.name_ar : r.name_en ?? r.name_ar}</Go> },
         { key: 'location_code', label: t('location') },
         { key: 'lot_no', label: t('lot'), render: (r) => r.lot_no ? <>{r.lot_no} <span className="muted">{dt(r.expiry_date, locale)}</span></> : '—' },
         { key: 'qty_on_hand', label: t('onHand'), num: true, render: (r) => <span style={{ color: Number(r.qty_on_hand) < 0 ? 'var(--danger)' : undefined }}>{qty(r.qty_on_hand, locale)}</span> },

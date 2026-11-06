@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, qs } from '@/lib/api';
 import { useI18n, money, dt } from '@/lib/i18n';
 import { useAsync, useAction, ErrorBox, Ok, PageHead, Table, State, Modal, Field } from '@/components/ui';
+import { Go } from '@/components/links';
 import { useMe } from '@/components/shell';
 
 export default function Journals() {
@@ -20,7 +21,7 @@ export default function Journals() {
         {can('accounting.journal.write') ? <button className="btn primary" onClick={() => setCreate(true)}>{t('newJournal')}</button> : null}
       </PageHead>
       <ErrorBox error={list.error} />
-      <Table rows={rows} cols={[{ key: 'posting_date', label: t('date'), render: (r) => dt(r.posting_date, locale) }, { key: 'number', label: t('number'), render: (r) => <button className="btn sm mono" onClick={() => setView(r.id)}>{r.number ?? 'draft'}</button> },
+      <Table rows={rows} cols={[{ key: 'posting_date', label: t('date'), render: (r) => dt(r.posting_date, locale) }, { key: 'number', label: t('number'), render: (r) => <Go type="journal_entry" id={r.id}><span className="mono">{r.number ?? 'draft'}</span></Go> },
         { key: 'journal_code', label: 'J' }, { key: 'source_type', label: t('type') }, { key: 'memo', label: t('memo') }, { key: 'total_debit', label: t('debit'), num: true, render: (r) => money(r.total_debit, locale) },
         { key: 'state', label: t('status'), render: (r) => <>{<State s={r.state} />}{r.late_posting ? <span className="badge warn">late</span> : null}</> }]} />
       {view ? <EntryView id={view} onClose={() => { setView(null); void list.reload(); }} /> : null}
