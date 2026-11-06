@@ -1,0 +1,20 @@
+[package]
+name = "pos-store"
+version = "0.1.0"
+edition = "2021"
+description = "Durable local journal for the RetailCore POS: SQLite (WAL, synchronous=FULL), atomic multi-table transactions, optional SQLCipher encryption."
+license = "UNLICENSED"
+
+[features]
+default = ["bundled"]
+bundled = ["rusqlite/bundled"]
+# Production: encrypted local DB (key from OS keystore). Requires OpenSSL toolchain at build time.
+encrypted = ["rusqlite/bundled-sqlcipher-vendored-openssl"]
+
+[dependencies]
+rusqlite = { version = "0.32", default-features = false }
+serde = { version = "1", features = ["derive"] }
+thiserror = "1"
+
+[dev-dependencies]
+tempfile = "3"
