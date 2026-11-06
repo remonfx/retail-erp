@@ -2,6 +2,11 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { Write-Host "Docker Desktop is not installed: https://www.docker.com/products/docker-desktop/" -ForegroundColor Red; exit 1 }
+docker info *> $null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Docker Desktop is installed but not running. Open Docker Desktop, wait until it shows 'Engine running', then run this script again." -ForegroundColor Yellow
+  exit 1
+}
 function New-Secret { -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | ForEach-Object { [char]$_ }) }
 if (-not (Test-Path .env)) {
   @"
