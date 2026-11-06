@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { get, post, session } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
+import { PinModal } from '@/components/pin-modal';
 
 export interface Me {
   user: { id: string; email: string; full_name: string; is_tenant_owner: boolean; mfa_enabled: boolean };
@@ -32,6 +33,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [companyId, setCompanyId] = useState('');
   const [theme, setTheme] = useState<'auto' | 'light' | 'dark'>('auto');
+  const [pinOpen, setPinOpen] = useState(false);
 
   useEffect(() => {
     if (!session.access) { router.replace('/login'); return; }
@@ -83,10 +85,12 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="spacer" />
             <button className="btn sm" onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'auto' : 'dark')} title={t('theme')}>{theme === 'dark' ? '☾' : theme === 'light' ? '☀' : '◐'}</button>
             <button className="btn sm" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>{t('language')}</button>
+            {can('pos.sell') ? <button className="btn sm" onClick={() => setPinOpen(true)}>POS PIN</button> : null}
             <span className="muted">{me.user.full_name}</span>
             <button className="btn sm" onClick={logout}>{t('logout')}</button>
           </header>
           <main className="content">{children}</main>
+          {pinOpen ? <PinModal onClose={() => setPinOpen(false)} /> : null}
         </div>
       </div>
     </MeCtx.Provider>

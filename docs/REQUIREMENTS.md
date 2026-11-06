@@ -294,3 +294,23 @@ The specification describes roughly the surface area of a mature ERP suite. Buil
 2. **POS offline is the second highest-risk component** — prototype the sync protocol early (Milestone 2 spike) even though the full POS ships later.
 3. **Defer native payroll, loyalty, e-commerce, budgets** — they don't affect the core data model if hooks are designed now.
 4. **Mobile app ships after web approvals exist** — it is a client of existing APIs, low architectural risk.
+
+---
+
+### 9.4 Decision log (2026-11-06)
+| # | Decision | Status |
+|---|---|---|
+| D1 | **SaaS multi-tenant** (one database, `tenant_id` on every row, PostgreSQL RLS) | **Decided by owner** |
+| D2 | Weighted average, company level (FIFO available per company on Growth+) | Default adopted — confirm with controller |
+| D3 | Consignment supported (`owner_id` on quants, supplier flag; no GL on receipt) | Default adopted |
+| D4 | Scale labels: prefix 21 = weight (5+5, 3 decimals), 22 = price (5+5, 2 decimals), configurable | Default adopted |
+| D5 | POS GL summarized per session; receipt-level sub-ledger | Default adopted |
+| D6 | Gross revenue + Sales Discounts contra account | Default adopted |
+| D7 | Negative stock blocked for back-office docs; POS sync accepts sale + exception | Default adopted |
+| D8 | ETA integration **not built yet** — top of roadmap | Open |
+| D9 | WHT entered per payment (`whtAmount`); category rates table not yet | Partially done |
+| D10 | Calendar fiscal year, monthly periods (3 years provisioned) | Default adopted |
+| D11 | Max offline 72 h (terminal setting) | Default adopted |
+| D12 | Offline returns only for receipts present on the terminal | Default adopted |
+| D13 | Offline tenders: cash, card, wallet, InstaPay, BNPL refs; vouchers/store credit blocked | Default adopted |
+| D19 | Approval thresholds: PO/payment/expense = 0 (everything approved) — **set real values per company** in company settings | Needs business values |

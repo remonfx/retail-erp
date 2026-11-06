@@ -63,3 +63,30 @@ Environment: documented hardware (e.g., PG 16 cores / 64 GB / NVMe; 2 API pods �
 
 ## 5. Definition of Done (per module)
 Requirements traced → schema + migrations → backend + permissions + audit → UI (ar/en, RTL) → unit/integration/authorization tests green → acceptance tests green → docs updated (module section + CHANGELOG) → no invariant test failures → reviewed.
+
+---
+
+## 6. Results (2026-11-06, single 16-vCPU / 15 GB container, PostgreSQL 16, Node 22)
+
+| Suite | Result |
+|---|---|
+| Domain unit + property tests (`packages/domain`) | 27 / 27 ✅ |
+| API integration (real PostgreSQL, RLS, invariants) | 28 / 28 ✅ |
+| POS engine ↔ API ↔ PostgreSQL e2e | 6 / 6 ✅ |
+| Rust journal (`pos-store`) | 3 / 3 ✅ |
+| Browser smoke — 17 back-office screens, RTL/LTR, dark, 390 px | ✅ 0 errors |
+| Browser POS flow — enroll → PIN → session → scan (incl. scale label) → pay → synced | ✅ |
+
+Invariant checks (TESTING §2) run inside the suites after every scenario: unbalanced entries 0, quant ≠ Σmoves 0, conservation violations 0, orphan moves 0, cost-qty mismatches 0.
+
+### Scale benchmark — 1,000,013 SKUs (1M products, 1M variants, 1M EAN-13 barcodes, 1M price items)
+HTTP through the full stack (auth, RLS, JSON), 600 requests per scenario, 20 concurrent clients, same host:
+
+| Scenario | p50 | p95 | p99 | req/s |
+|---|---|---|---|---|
+| Product search (Arabic-normalized name / SKU) | 139 ms | **210 ms** | 277 ms | 139 |
+| Barcode lookup (exact) | 26 ms | **36 ms** | 39 ms | 768 |
+| Product list page (keyset) | 44 ms | 60 ms | 71 ms | 447 |
+| Dashboard (month) | 50 ms | 66 ms | 71 ms | 400 |
+
+Finding: the first search implementation took **17 s** at p50 because RLS prevents index use for non-LEAKPROOF operators (`LIKE`, `upper()`). Fixed with SECURITY DEFINER id-lookup functions that apply the tenant filter from the session (migration 0011). Targets met: search p95 < 300 ms ✅, common API p95 < 500 ms ✅. Not yet measured: 300 concurrent users, POS reconnect storm, 200 M stock moves.

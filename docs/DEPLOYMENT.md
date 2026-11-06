@@ -32,3 +32,13 @@ Runtime: Kubernetes (Helm) recommended for multi-pod; Docker Compose + systemd a
 
 ## 5. Open items
 Hosting region & data residency (D23), on-prem vs cloud (D1), customer IT support model.
+
+---
+
+## 6. What exists now
+- `docker-compose.yml`: postgres, redis, one-shot `migrate`, `api`, `worker`, `web`. Requires `JWT_SECRET` and `MFA_ENCRYPTION_KEY` (the API refuses to start in production with dev defaults).
+- `apps/api/Dockerfile` (API + worker image), `apps/web/Dockerfile`.
+- `.github/workflows/ci.yml`: typecheck all packages, domain + API + POS e2e tests against PostgreSQL 16, web & POS builds, Rust tests.
+- `scripts/dev-up.sh`: local all-in-one.
+
+**Before production:** change the `rc_app` role password created by migration 0009 (`ALTER ROLE rc_app PASSWORD '…'`) and use it in `DATABASE_URL`; run the API as `rc_app` (never the owner); schedule `rc_maintain_partitions()` (the worker does it every 6 h with the owner URL); enable PITR backups; put the API behind TLS.

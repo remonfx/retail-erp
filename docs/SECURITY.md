@@ -93,3 +93,10 @@ Required statements from the spec — verified by automated authorization tests:
 - Backups encrypted, copied off-site/other region; **quarterly restore drill** (documented evidence).
 - Object storage versioning + lifecycle rules.
 - POS: local journal keeps un-synced transactions indefinitely; server outage ≠ data loss.
+
+---
+
+## 9. Implementation status (v0.2)
+Implemented and tested: Argon2id passwords & PINs; JWT (10 min) + rotating refresh tokens with family revocation on reuse; TOTP MFA (secret AES-256-GCM encrypted); RBAC × scope with role templates matching §3; PostgreSQL RLS on every tenant table with `FORCE ROW LEVEL SECURITY` and a non-owner app role; SoD conflict checks on role creation/grants; no self-assignment; no self-approval (API + DB `CHECK`); maker-checker for manual journals and count postings; immutable stock moves / posted journals / audit log (DB triggers); idempotency keys; per-credential rate limiting; device enrollment codes (single use, 24 h) and revocation; security headers.
+
+Gaps: MFA not yet mandatory per role; 4-eyes on privileged grants; audit hash chain; device request signing; secrets vault integration; PDPL export/erasure workflow; external pentest.

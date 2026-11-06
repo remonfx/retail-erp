@@ -14,7 +14,10 @@ export default function Users() {
   const a = useAction();
   return (
     <>
-      <PageHead title={t('users')}>{can('core.user.manage') ? <button className="btn primary" onClick={() => setNewOpen(true)}>{t('newUser')}</button> : null}</PageHead>
+      <PageHead title={t('users')}>
+        {can('core.user.manage') ? <button className="btn primary" onClick={() => setNewOpen(true)}>{t('newUser')}</button> : null}
+      </PageHead>
+
       <ErrorBox error={users.error ?? a.error} /><Ok msg={a.ok} />
       <Table rows={users.data} cols={[{ key: 'full_name', label: t('fullName') }, { key: 'email', label: t('email'), render: (r) => <span dir="ltr">{r.email}</span> }, { key: 'status', label: t('status'), render: (r) => <State s={r.status} /> },
         { key: 'mfa_enabled', label: 'MFA', render: (r) => r.mfa_enabled ? '✓' : '—' }, { key: 'last_login_at', label: t('lastSeen'), render: (r) => dt(r.last_login_at, locale) },

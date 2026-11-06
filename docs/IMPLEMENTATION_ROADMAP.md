@@ -1,66 +1,53 @@
-# Implementation Roadmap & Project Checklist
+# Implementation Roadmap & Status
 
-**Version:** 0.1 — Draft · Status legend: ☐ not started · ◐ in progress · ☑ done (tests green)
+**Version:** 0.2 · **Date:** 2026-11-06 · Legend: ☑ done and covered by automated tests · ◐ built, partially verified · ☐ not started
 
-Sequencing principle: **financial spine first** (core → catalog → inventory → accounting), highest-risk items **spiked early** (POS sync, 1M-SKU search), clients after APIs exist.
+Deployment model decided: **SaaS multi-tenant** (D1). Other §9 decisions were taken at their proposed defaults so work could proceed without blocking; each is configurable and listed in REQUIREMENTS.md §9.4 for business confirmation.
 
-Duration estimates assume a team of ~6–8 engineers (2 BE, 2 FE, 1 Rust/desktop, 1 mobile (from M6), 1 QA, part-time DevOps) and are **estimates, not commitments**. A smaller team scales the timeline roughly linearly.
+## Status by milestone
 
-| # | Milestone | Content | Exit criteria | Est. |
-|---|---|---|---|---|
-| M0 | Architecture sign-off | This document set reviewed; decisions D1–D10 approved | Signed decision log | 1–2 wk |
-| M1 | Foundation | Monorepo, CI, Docker Compose, migrations framework, auth (MFA), org hierarchy, RBAC+scope+RLS, audit log, numbering, settings, i18n/RTL shell, design tokens, outbox + jobs | Authorization matrix tests green; RLS isolation tests green | 5–6 wk |
-| M2 | Catalog + datagen + **spikes** | PIM (products, variants, barcodes, UoM, categories, brands, assortment), duplicates/similar-name, import/export, bulk ops, history; OpenSearch indexing; synthetic 1M-SKU dataset. **Spike:** POS sync protocol prototype (push/pull, idempotency) | Search p95 < 300 ms on 1M dataset; import 1M rows; sync spike passes duplicate-replay test | 6–7 wk |
-| M3 | Inventory engine | Locations, moves, quants, reservations, transfers (2-step), adjustments, lots/serials/expiry, counts (web), valuation (avg + FIFO), negative stock policy | Conservation & quant=Σmoves invariants; concurrency tests (no deadlocks at 200 parallel writers) | 6–8 wk |
-| M4 | Accounting core | COA + Egyptian template, journals, posting engine + mappings, periods/locks, GL, TB, P&L, BS, cash-flow, inventory→GL postings, reversal | Zero unbalanced; sub-ledger = GL; period lock DB tests | 7–8 wk |
-| M5 | Pricing + Purchasing + AP | Price lists, scheduled prices, promotions engine (`@rc/domain`), suppliers, PR→PO→GRN→Invoice, 3-way match, returns, AP, payments, WHT, supplier statements | Full P2P acceptance suite | 7–8 wk |
-| M6 | POS desktop (online) | Tauri app, hardware (printer, drawer, scanner), checkout, payments, returns/exchanges, shifts, X/Z reports, sales sub-ledger, session GL posting, cashier KPIs | Checkout acceptance + hardware certification on standard models | 7–8 wk |
-| M7 | POS offline + sync hardening | SQLCipher store, journal, outbox, snapshots, device enrollment/revocation, conflict policies, quarantine UI, sync monitoring, crash recovery | Chaos tests (kill -9, power loss), reconnect storm test | 5–6 wk |
-| M8 | AR, bank, cash, expenses, ETA | Customers/AR, bank statement import & reconciliation, card settlement reconciliation, expenses + approvals, ETA e-Receipt/e-Invoice integration (per validated spec) | ETA preprod certification; reconciliation acceptance | 6–8 wk |
-| M9 | Reporting | Read models, operational dashboards, report builder (filters/grouping/drill-down), saved reports, async XLSX/CSV/PDF | Report performance targets | 5–6 wk |
-| M10 | Mobile | Executive dashboard, lookup, scanning, offline stocktake, approvals, notifications, attendance | Offline count sync tests | 6–7 wk (parallel from M8) |
-| M11 | HR-lite | Employees, attendance import, payroll import → posting | Payroll posting acceptance | 3 wk |
-| M12 | Hardening & pilot | Full load test, security review/pentest, DR drill, data migration tooling, pilot branch go-live | Go-live checklist | 6–8 wk |
-
-Indicative total: **~16–20 months** to a production pilot with the full v1 scope. Fastest path to business value: a **"Core Retail MVP" = M1–M7** (catalog, inventory, accounting, purchasing, POS offline) ≈ 11–13 months.
-
----
-
-## Project-wide checklist
-
-### Documentation
-- ☑ REQUIREMENTS.md (draft) · ☑ ARCHITECTURE.md (draft) · ☑ DATABASE_SCHEMA.md (draft) · ☑ ACCOUNTING_RULES.md (draft) · ☑ INVENTORY_RULES.md (draft) · ☑ API_DOCUMENTATION.md (draft) · ☑ SECURITY.md (draft) · ☑ DEPLOYMENT.md (draft) · ☑ TESTING.md (draft) · ☑ CHANGELOG.md · ☑ IMPLEMENTATION_ROADMAP.md
-- ☐ Decision log D1–D24 approved
-- ☐ ADR files written for each ADR (docs/adr/)
-
-### M1 Foundation
-☐ monorepo & CI · ☐ DB migrations framework · ☐ auth + MFA · ☐ org hierarchy · ☐ RBAC + scopes · ☐ RLS · ☐ audit log · ☐ numbering · ☐ settings hierarchy · ☐ outbox + BullMQ · ☐ web shell (RTL/LTR, dark/light, tokens) · ☐ authz matrix test harness
-
-### M2 Catalog
-☐ products/variants · ☐ barcodes (+aliases, pack, weighted) · ☐ UoM & conversions · ☐ categories/brands · ☐ supplier links · ☐ branch assortment · ☐ duplicate & similar-name detection · ☐ merge workflow · ☐ bulk edit/price/category · ☐ import/export streaming · ☐ history · ☐ OpenSearch · ☐ datagen 1M · ☐ sync spike
-
-### M3 Inventory
-☐ locations · ☐ moves & quants · ☐ reservations · ☐ transfers 2-step · ☐ adjustments + reasons + approvals · ☐ scrap/damage/loss · ☐ lots/expiry · ☐ serials · ☐ counts · ☐ avg costing · ☐ FIFO costing · ☐ negative stock policy · ☐ analytics (aging, ABC, turnover, dead stock) · ☐ replenishment
-
-### M4 Accounting
-☐ COA + template · ☐ journals · ☐ posting engine & mappings · ☐ periods/locks · ☐ reversal · ☐ GL/TB · ☐ P&L/BS/CF · ☐ inventory postings · ☐ cost centers & allocations
-
-### M5 Pricing & Purchasing
-☐ price lists · ☐ scheduled prices · ☐ promotions engine · ☐ suppliers · ☐ PR · ☐ RFQ · ☐ PO + approvals · ☐ GRN · ☐ supplier invoice · ☐ 3-way match · ☐ purchase returns/credit notes · ☐ AP + payments + WHT · ☐ supplier statements/performance · ☐ landed costs
-
-### M6–M7 POS
-☐ Tauri shell · ☐ hardware drivers · ☐ checkout · ☐ payments/split · ☐ returns/exchanges · ☐ shifts/X/Z · ☐ cashier KPIs · ☐ SQLCipher store · ☐ journal/outbox · ☐ push/pull · ☐ snapshots · ☐ device enrollment · ☐ conflict policies · ☐ quarantine UI · ☐ monitoring · ☐ crash recovery
-
-### M8–M12
-☐ AR · ☐ bank recon · ☐ card settlement recon · ☐ expenses · ☐ ETA · ☐ read models · ☐ dashboards · ☐ report builder · ☐ exports · ☐ mobile · ☐ HR-lite · ☐ load test · ☐ pentest · ☐ DR drill · ☐ migration tooling · ☐ pilot
-
-## Top risks
-| Risk | Likelihood | Impact | Mitigation |
+| # | Milestone | Status | Notes |
 |---|---|---|---|
-| Scope creep / everything in parallel | High | High | Milestone gates; MVP = M1–M7 |
-| ETA spec/obligation changes | Medium | High | Isolated `eta` module; early tax-advisor validation (D8) |
-| POS sync edge cases (duplicates, lost sales) | Medium | Critical | Early spike (M2), chaos testing, quarantine-not-discard |
-| Costing errors discovered after go-live | Medium | Critical | Invariant tests, sub-ledger=GL check, controller sign-off on rules |
-| Hardware diversity in stores | High | Medium | Certified hardware list (D24) |
-| Rust/Tauri skill gap | Medium | Medium | Keep Rust core thin; Electron fallback documented (ADR-010) |
-| Data migration from legacy | High | High | Dedicated migration tooling + dry runs in M12 |
+| M0 | Architecture sign-off | ☑ | Docs v0.1 → v0.2 reflect what was built |
+| M1 | Foundation (SaaS tenancy, auth, RBAC+scope, RLS, audit, numbering, outbox, web shell) | ☑ | |
+| M2 | Catalog + datagen + sync spike | ☑ | 1M-SKU dataset and benchmark done |
+| M3 | Inventory engine | ☑ | |
+| M4 | Accounting core | ☑ | |
+| M5 | Pricing + purchasing + AP | ☑ | Landed costs ☐ |
+| M6 | POS desktop (online) | ◐ | UI + engine verified in browser; Tauri binary not built in CI env; ESC/POS command written, not tested on hardware |
+| M7 | POS offline + sync hardening | ☑ | Snapshot download ☐ (initial load pages through delta feed) |
+| M8 | AR, bank, cash, expenses, **ETA** | ◐ | Expenses, payments, AP ☑; bank statement import ☐; card settlement reconciliation ☐; **ETA e-Invoice/e-Receipt ☐** |
+| M9 | Reporting | ◐ | Dashboards, statements, sales/inventory analytics ☑; saved reports ☐; XLSX/PDF ☐ (CSV + print ☑) |
+| M10 | Mobile | ◐ | Typecheck + Android bundle ☑; not run on a device |
+| M11 | HR-lite | ◐ | Employees, attendance, payroll import → GL built; payroll posting not yet covered by a test |
+| M12 | Hardening & pilot | ☐ | Pentest, DR drill, legacy migration tooling, pilot branch |
+
+## Detailed checklist
+
+### Platform / SaaS
+☑ tenant signup & provisioning · ☑ plans & limits (companies/branches/terminals/users/SKUs) · ☑ plan change with downgrade guard · ☐ billing / payment gateway (Paymob/Fawry) · ☐ tenant data export & deletion (PDPL) · ☐ custom domains / SSO
+
+### Security
+☑ Argon2id · ☑ JWT + refresh rotation & reuse detection · ☑ TOTP MFA · ☑ RBAC × scope · ☑ RLS (tenant + company) · ☑ SoD rules · ☑ maker-checker (journals, approvals, counts) · ☑ audit log (row triggers + commands) · ☑ idempotency keys · ☑ per-credential rate limiting · ☐ MFA enforced by role policy (currently opt-in) · ☐ 4-eyes for privileged role grants · ☐ audit hash chain · ☐ WebAuthn · ☐ device key-pair signing (v1 uses per-device secret over TLS)
+
+### Catalog & pricing
+☑ products/variants/barcodes/UoM · ☑ scale & price-embedded barcodes · ☑ duplicates & similar names · ☑ merge · ☑ bulk edit / price · ☑ CSV import (set-based) & streaming export · ☑ branch assortment · ☑ price lists & tiers · ☑ promotions + approval · ☐ product images upload (table exists, no storage integration) · ☐ bundles/kits
+
+### Inventory
+☑ moves/quants · ☑ avg & FIFO · ☑ lots/expiry · ☑ serials · ☑ adjustments/scrap with thresholds · ☑ transfers 2-step · ☑ counts · ☑ negative-stock exceptions · ☑ ABC / dead stock / aging / turnover / expiring lots · ☑ replenishment suggestions · ☐ reservations from sales orders · ☐ bin-level put-away · ☐ landed cost
+
+### Accounting
+☑ COA template · ☑ posting engine & mappings · ☑ periods & locks · ☑ reversal · ☑ TB/P&L/BS/CF/VAT/GL/AP aging · ☑ payments & WHT · ☑ expenses · ☑ opening balances · ☐ bank statement import & reconciliation · ☐ card settlement matching · ☐ multi-currency revaluation · ☐ year-end closing entry · ☐ intercompany elimination · ☐ cost allocations
+
+### POS
+☑ engine (offline journal, outbox, sync, X/Z, returns with receipt, cash movements, supervisor override) · ☑ web/Tauri UI · ☑ device enrollment & revocation · ☑ quarantine & monitoring · ◐ Tauri shell (code written; build needs WebView libs) · ◐ ESC/POS printing (browser print works; raw printer untested) · ☐ customer display · ☐ integrated card terminals · ☐ gift cards / loyalty · ☐ ETA e-Receipt QR
+
+### Mobile
+◐ dashboard · ◐ barcode lookup (camera) · ◐ approvals · ◐ offline stocktake queue · ◐ attendance with location — all compile; device testing pending
+
+## Highest-value next steps (in order)
+1. **ETA e-Receipt / e-Invoice** — legal blocker for go-live; needs official ETA SDK specs and test credentials.
+2. **Tauri build & hardware certification** on the chosen printer/scanner/drawer models (D24).
+3. **Bank & card settlement reconciliation** — closes the cash loop for month-end.
+4. **Billing for the SaaS** (subscription invoices + payment gateway).
+5. **Security hardening**: enforce MFA for finance/admin roles, pentest, restore drill.

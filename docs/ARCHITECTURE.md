@@ -431,3 +431,18 @@ retail-erp/
 | 008 | POS GL posting summarized per shift session (D5) | Needs business approval |
 | 009 | Weighted average costing default, company level (D2) | Needs business approval |
 | 010 | Tauri over Electron for POS | Proposed (risk: Rust skills) |
+
+---
+
+## 12. Implementation decisions (v0.2, 2026-11-06)
+| Draft decision | Built as | Why |
+|---|---|---|
+| NestJS | **Fastify** + small `route()` helper (auth, scope, Zod validation, idempotency, RLS transaction) | Less boilerplate; module boundaries kept by folders |
+| Kysely | **`pg` with hand-written SQL** | Full control of locking, partitions, `json_populate_recordset` bulk writes |
+| BullMQ | **PostgreSQL outbox** claimed with `FOR UPDATE SKIP LOCKED` (`outbox_claim()`), N worker replicas | One less moving part; exactly-once via `core_processed_event` + `acc_posting_registry` |
+| OpenSearch | **`pg_trgm` GIN on Arabic-normalized names** + SECURITY DEFINER id lookups | Measured p95 210 ms at 1M SKUs; revisit beyond ~5M or for typo tolerance |
+| Device key pairs | **Per-device 32-byte secret**, stored as SHA-256, sent over TLS | Simpler enrollment; signing is a planned hardening step |
+| Multi-tenant ready | **SaaS**: `tenant_id` everywhere, RLS `tenant_id = rc_tenant() AND rc_company_ok(company_id)`, app role without BYPASSRLS; pre-auth lookups via SECURITY DEFINER functions | D1 |
+
+### RLS performance rule (learned from the 1M-SKU benchmark)
+Under RLS, predicates using non-LEAKPROOF functions (`LIKE`, `ILIKE`, `upper()`, trigram `%`) cannot be evaluated before the policy and lose index access. Any search over large tables must go through a SECURITY DEFINER function that filters `tenant_id = rc_tenant()` explicitly and returns ids only (see `catalog_search_ids`, `catalog_code_ids`).
