@@ -3,7 +3,8 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { uuidv7 } from '@rc/domain';
 
-export const API_URL: string = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ?? 'http://localhost:4000';
+// EXPO_PUBLIC_API_URL (set in eas.json or the shell) wins; app.json extra.apiUrl is the emulator default.
+export const API_URL: string = process.env.EXPO_PUBLIC_API_URL ?? (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ?? 'http://localhost:4000';
 
 export class ApiError extends Error { constructor(public status: number, public code: string, msg: string) { super(msg); } }
 

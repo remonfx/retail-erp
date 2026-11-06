@@ -1,0 +1,7 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
+  "build": {
+    "preview": { "distribution": "internal", "android": { "buildType": "apk" }, "env": { "EXPO_PUBLIC_API_URL": "http://192.168.1.10:4000" } },
+    "production": { "android": { "buildType": "app-bundle" }, "env": { "EXPO_PUBLIC_API_URL": "https://api.example.com" } }
+  }
+}
